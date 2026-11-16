@@ -1738,7 +1738,7 @@ document
 
 document
 .getElementById("difficulty")
-.addEventListener("input", function() {
+.addEventListener("change", function() {
 
     this.value = Math.min(
         10,
@@ -1747,6 +1747,7 @@ document
             Number(this.value)
         )
     );
+
 });
 
 document.getElementById(
