@@ -1195,6 +1195,7 @@ function renderEditor() {
                                 style="width:70px"
                                 type="number"
                                 min="1"
+                                max="${ enforceStatMaximums ? (stat.maxValue || 10) : '' }"
                                 value="${stat.value}"
                                 onchange="
                                     stats[${index}].value =
@@ -1622,7 +1623,7 @@ document
         category: "Other",
         name: "New Stat",
         value: 1,
-        maxValue: 10
+        maxValue: 5
     });
     renderEditor();
 });
@@ -1868,6 +1869,24 @@ document.addEventListener("drop", event => {
 
             importCharacter(file);
         }
+    }
+});
+
+document.addEventListener("touchstart", function(event) {
+
+    const activeElement =
+        document.activeElement;
+
+    if (
+        activeElement &&
+        (
+            activeElement.tagName === "INPUT" ||
+            activeElement.tagName === "TEXTAREA"
+        ) &&
+        !event.target.closest("input") &&
+        !event.target.closest("textarea")
+    ) {
+        activeElement.blur();
     }
 });
 
