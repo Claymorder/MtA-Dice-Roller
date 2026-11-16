@@ -1,0 +1,1866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Cg fill='%238a3ffc' stroke='white' stroke-width='4' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M64 10 L118 52 L64 118 L10 52 Z'/%3E%3Cpath d='M64 10 L38 48' fill='none'/%3E%3Cpath d='M64 10 L90 48' fill='none'/%3E%3Cpath d='M38 48 L64 66' fill='none'/%3E%3Cpath d='M90 48 L64 66' fill='none'/%3E%3Cpath d='M64 66 L64 118' fill='none'/%3E%3Cpath d='M10 52 L38 48' fill='none'/%3E%3Cpath d='M118 52 L90 48' fill='none'/%3E%3C/g%3E%3C/svg%3E">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mage the Ascension Dice Roller</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scrollbar-gutter: stable both-edges;
+}
+
+body {
+    margin: 0;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    background: #1e1e1e;
+    color: white;
+}
+
+.container {
+    max-width: 1200px;
+    margin: auto;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: end;
+    margin-bottom: 25px;
+}
+
+.panelContent {
+    max-height: 450px;
+    overflow-y: auto;
+}
+
+#characterPanel summary,
+.history summary {
+    top: 0;
+
+    background: #1e1e1e;
+
+    z-index: 10;
+
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+#characterPanel[open] > *:not(summary),
+.history[open] > *:not(summary) {
+    padding-top: 10px;
+}
+
+#summaryStats {
+    font-size: 16px !important;
+    font-weight: normal !important;
+    color: #cccccc;
+    display: none;
+}
+
+#characterList,
+#characterName,
+#activeCharacterList {
+    width: 250px;
+}
+
+.editorButton {
+    width: 150px;
+
+    color: black;
+    background: #00ff00;
+
+    border: 3px solid #666;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+}
+
+input {
+    width: 120px;
+    padding: 10px;
+    font-size: 18px;
+    border: none;
+    border-radius: 6px;
+}
+
+button {
+    padding: 12px 24px;
+    font-size: 18px;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    cursor: pointer;
+}
+
+#rollButton {
+    background: #4CAF50;
+}
+
+#rollButton:hover {
+    background: #43a047;
+}
+
+#clearHistory {
+    background: #b33a3a;
+}
+
+#characterPanel[open] #summaryStats {
+    display: inline;
+}
+
+#clearHistory:hover {
+    background: #962f2f;
+}
+
+.history #clearHistory {
+    margin-bottom: 15px;
+}
+
+.success-display {
+    text-align: center;
+    font-size: 72px;
+    font-weight: bold;
+    margin: 30px 0;
+    padding: 25px;
+    border-radius: 15px;
+    background: #2b2b2b;
+    border: 4px solid #666;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 15px rgba(255,255,255,0.1);
+}
+
+.dice-section {
+    margin-bottom: 25px;
+}
+
+.dice-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 0;
+}
+
+.die {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.die svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.die-number {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: bold;
+    color: white;
+}
+
+.history {
+    margin-top: 35px;
+    border-top: 2px solid #444;
+    padding-top: 15px;
+}
+
+.history summary {
+    cursor: pointer;
+    font-size: 24px;
+    font-weight: bold;
+    user-select: none;
+    padding: 8px 0;
+}
+
+.history-entry {
+    background: #2b2b2b;
+    padding: 12px;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+.history-time {
+    color: #aaa;
+    margin-bottom: 5px;
+}
+
+.character-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+
+    font-size: 32px;
+    cursor: pointer;
+}
+
+#statButtons {
+    display: flex;
+    gap: 40px;
+    flex-wrap: wrap;
+}
+
+.statColumn {
+    min-width: 180px;
+}
+
+.statColumn h4 {
+    margin-bottom: 10px;
+    border-bottom: 1px solid #666;
+    text-align: center;
+    text-transform: capitalize;
+}
+
+.statButton {
+    display: block;
+    color: black;
+    width: 100%;
+    margin-bottom: 6px;
+}
+
+#statEditor {
+    margin-top: 15px;
+    margin-bottom: 15px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+}
+
+#statEditor .statColumn {
+    min-width: 280px;
+}
+
+#editorPanel .editorButton {
+    margin-bottom: 5px;
+}
+
+#deleteCharacter {
+    margin-top: 15px;
+}
+
+#luckIndicator {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+
+    background: #2e7d32;
+    color: white;
+
+    padding: 10px 15px;
+    border-radius: 8px;
+
+    font-weight: bold;
+
+    z-index: 1000;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div
+        class="character-button"
+        title="Character Editor">
+        ⚙
+    </div>
+
+    <div id="luckIndicator" style="display:none;">
+        🍀 Lucky Roll Armed
+    </div>
+
+    <div id="editorPanel" style="display:none">
+
+    <h3>Character Editor</h3>
+    
+    <div class="field"> 
+
+    <label>Saved Characters:</label>
+
+    <select id="characterList">
+        <option value="">New Character</option>
+    </select>
+
+        <label>Character Name:</label>
+
+        <input
+            id="characterName"
+            placeholder="Character Name"
+            style="width:250px"
+        >
+    </div>
+
+    <button 
+        id="saveStats"
+        class="editorButton">
+        Save Character
+    </button>
+
+    <button
+        id="deleteCharacter"
+        class="editorButton"
+        style="background:#b33a3a;">
+        Delete Character
+    </button>
+
+    <button
+        id="exportCharacter"
+        class="editorButton">
+        Export Character
+    </button>
+  
+    <button
+        id="importCharacter"
+        class="editorButton">
+        Import Character
+    </button>
+
+    <input
+        type="file"
+        id="importFile"
+        accept=".json"
+        style="display:none;">
+
+        <div id="statEditor"></div>
+
+    <div class="field">
+
+    <div class="field">
+
+        <label
+            style="
+                display:flex;
+                align-items:center;
+                justify-content:space-between;
+                width:180px;
+                margin-bottom: 6px;
+                
+            "
+        >
+            <span>Stat Maximums</span>
+
+            <input
+                type="checkbox"
+                id="enforceMaximums"
+            >
+        </label>
+    </div>
+        <button 
+            id="addStatButton"
+            class="editorButton"
+            style="background:white;">
+            Add Stat
+        </button>
+    </div>
+</div>
+
+    <h1>Mage the Ascension Dice Roller</h1>
+
+    <div class="field">
+        <label>Current Character</label>
+        <select id="activeCharacterList"></select>
+    </div>
+
+    <div class="controls">
+
+        <div class="field">
+            <label>Number of Dice</label>
+            <input id="diceCount" type="number" min="1" value="5">
+        </div>
+
+        <div class="field">
+            <label>Difficulty (1-10)</label>
+            <input id="difficulty" type="number" min="1" max="10" value="5">
+        </div>
+
+        <button id="rollButton">ROLL</button>
+
+    </div>
+
+    <div id="successDisplay" class="success-display">
+        0 Successes
+    </div>
+
+    <div class="dice-section">
+        <h3>Main Dice</h3>
+        <div id="mainDice" class="dice-row"></div>
+    </div>
+
+    <div class="dice-section">
+        <h3>Exploding Dice</h3>
+        <div id="bonusDiceContainer"></div>
+    </div>
+
+    <details class="history" id="characterPanel">
+        <summary id="characterStatsSummary">
+            <span>Character Stats</span>
+
+            <span id="summaryStats"
+                  style="
+                    margin-left:20px;
+                    font-size:16px;
+                    font-weight:normal;
+                  ">
+                No stats selected | Dice Pool: 0
+            </span>
+        </summary>
+
+        <div class="panelContent">
+
+            <div id="statButtons"></div>
+
+        </div>
+
+    </details>
+
+    <details class="history">
+        <summary id="historySummary">History</summary>
+
+        <div class="panelContent">
+
+            <button id="clearHistory">
+                Clear History
+            </button>
+
+            <div id="history"></div>
+
+        </div>
+    </details>
+
+</div>
+
+<script>
+
+const MAX_HISTORY = 100;
+
+let selectedStats = [];
+let selectedDice = 0;
+let forceTen = false;
+let enforceStatMaximums = true;
+let categoryOrder = getDefaultCategoryOrder();
+
+let pendingHistoryRoll =
+    JSON.parse(
+        localStorage.getItem(
+            "pendingHistoryRoll"
+        )
+    );
+
+let rollHistory =
+    JSON.parse(
+        localStorage.getItem("rollHistory")
+    ) || [];
+
+const rollButton = document.getElementById("rollButton");
+const clearHistoryButton = document.getElementById("clearHistory");
+
+document.addEventListener("dragover", event => {
+    event.preventDefault();
+});
+
+function updateSelectedStatsDisplay() {
+
+    document.getElementById(
+        "summaryStats"
+    ).textContent =
+        selectedStats.length > 0
+            ? selectedStats.join(" + ") +
+                " | Dice Pool: " +
+                selectedDice
+            : "No stats selected | Dice Pool: 0";
+}
+
+function loadHistory() {
+
+    const history =
+        document.getElementById("history");
+
+    history.innerHTML = "";
+
+    rollHistory.forEach(html => {
+
+        const entry =
+            document.createElement("div");
+
+        entry.className =
+            "history-entry";
+
+        entry.innerHTML = html;
+
+        history.appendChild(entry);
+    });
+}
+
+function deleteCharacter() {
+
+    const name =
+        document
+            .getElementById("characterName")
+            .value
+            .trim();
+
+    if (!name) return;
+
+    const saveData =
+        JSON.parse(
+            localStorage.getItem(
+                "d10Characters"
+            )
+        ) || {};
+
+    if (
+        !confirm(
+            `Delete ${name}?`
+        )
+     ) {
+        return;
+    }
+
+    if (
+        localStorage.getItem(
+            "lastCharacter"
+        ) === name
+    ) {
+        localStorage.removeItem(
+            "lastCharacter"
+        );
+    }
+
+    delete saveData[name];
+
+    localStorage.setItem(
+        "d10Characters",
+        JSON.stringify(saveData)
+    );
+
+    refreshCharacterList();
+
+    const select =
+        document.getElementById(
+            "characterList"
+        );
+
+    if (select.options.length > 1) {
+
+        // First real character
+        select.selectedIndex = 1;
+
+        const newCharacter =
+            select.options[1].value;
+
+        document.getElementById(
+            "characterName"
+        ).value = newCharacter;
+
+        document.getElementById(
+            "activeCharacterList"
+        ).value = newCharacter;
+
+        loadCharacter();
+       
+    }
+    else {
+
+        document.getElementById(
+            "characterName"
+        ).value = "";
+
+        document.getElementById(
+            "activeCharacterList"
+        ).value = "";
+
+        categoryOrder = getDefaultCategoryOrder();
+
+        stats = getDefaultStats();
+
+        selectedStats = [];
+        selectedDice = 0;
+
+        updateSelectedStatsDisplay();
+
+        renderEditor();
+        renderStatButtons();
+    }
+
+}
+
+function getDefaultStats() {
+    return [
+        { name: "Strength", category: "Body", value: 1, maxValue: 5 },
+        { name: "Dexterity", category: "Body", value: 1, maxValue: 5 },
+        { name: "Stamina", category: "Body", value: 1, maxValue: 5 },
+
+        { name: "Charisma", category: "Social", value: 1, maxValue: 5 },
+        { name: "Manipulation", category: "Social", value: 1, maxValue: 5 },
+        { name: "Appearance", category: "Social", value: 1, maxValue: 5 },
+
+        { name: "Perception", category: "Mental", value: 1, maxValue: 5 },
+        { name: "Intelligence", category: "Mental", value: 1, maxValue: 5 },
+        { name: "Wits", category: "Mental", value: 1, maxValue: 5 },
+
+        { name: "Arete", category: "Other", value: 1, maxValue: 10 },
+        { name: "Willpower", category: "Other", value: 10, maxValue: 10 }
+    ];
+}
+
+function renderStatButtons() {
+
+    const container =
+        document.getElementById("statButtons");
+
+    container.innerHTML = "";
+
+    const categories = {};
+
+    stats.forEach(stat => {
+
+        const category =
+            (stat.category || "Other")
+                .trim()
+                .toLowerCase();
+
+        if (!categories[category]) {
+            categories[category] = [];
+        }
+
+        categories[category].push(stat);
+    });
+
+    categoryOrder
+        .filter(category => categories[category])
+        .forEach(category => {
+
+            let html = `
+                <div class="statColumn">
+                    <h4 style="
+                        border-bottom:1px solid #666;
+                        margin-bottom:10px;
+                ">
+                ${category}
+                </h4>
+            `;
+
+            categories[category]
+                .forEach(stat => {
+
+                    const highlightStat =
+                        stat.value > stat.maxValue;
+
+
+                    html += `
+                        <button
+                            class="statButton"
+                            style="
+                                background:${
+                                    highlightStat
+                                        ? '#00BFFF'
+                                        : 'white'
+                                };
+                                color:black;
+                            "
+                            onclick="selectStat('${stat.name}', ${stat.value})">
+                            ${stat.name} (${stat.value})
+                        </button>
+                    `;
+                });
+
+            html += "</div>";
+
+            container.innerHTML += html;
+        });
+}
+
+function saveCharacter() {
+
+    const name =
+        document
+        .getElementById(
+            "characterName"
+        )
+        .value
+        .trim();
+
+    if (!name) return;
+
+    const saveData =
+        JSON.parse(
+            localStorage.getItem(
+                "d10Characters"
+            )
+        ) || {};
+
+    saveData[name] = {
+        stats: stats,
+        categoryOrder: categoryOrder,
+        enforceStatMaximums:
+            enforceStatMaximums
+    };
+
+    localStorage.setItem(
+        "d10Characters",
+        JSON.stringify(saveData)
+    );
+
+    localStorage.setItem(
+        "lastCharacter",
+        name
+    );
+
+    refreshCharacterList();
+
+    document.getElementById(
+        "characterList"
+    ).value = name;
+
+    document.getElementById(
+        "activeCharacterList"
+    ).value = name;
+
+}
+
+function exportCharacter() {
+
+    const name =
+        document.getElementById(
+            "characterName"
+        ).value.trim();
+
+    if (!name) return;
+
+    const characterData = {
+        name: name,
+        stats: stats,
+        categoryOrder: categoryOrder
+    };
+
+
+    const blob = new Blob(
+        [JSON.stringify(characterData, null, 2)],
+        { type: "application/json" }
+    );
+
+    const url =
+        URL.createObjectURL(blob);
+
+    const link =
+        document.createElement("a");
+
+    link.href = url;
+    link.download = `${name}.json`;
+
+    link.click();
+
+    URL.revokeObjectURL(url);
+}
+
+function moveCategoryUp(category) {
+
+    const index =
+        categoryOrder.indexOf(category);
+
+    if (index <= 0) return;
+
+    [
+        categoryOrder[index - 1],
+        categoryOrder[index]
+    ] = [
+        categoryOrder[index],
+        categoryOrder[index - 1]
+    ];
+
+    renderEditor();
+    renderStatButtons();
+}
+
+function moveCategoryDown(category) {
+
+    const index =
+        categoryOrder.indexOf(category);
+
+    if (
+        index === -1 ||
+        index === categoryOrder.length - 1
+    ) {
+        return;
+    }
+
+    [
+        categoryOrder[index + 1],
+        categoryOrder[index]
+    ] = [
+        categoryOrder[index],
+        categoryOrder[index + 1]
+    ];
+
+    renderEditor();
+    renderStatButtons();
+}
+
+function importCharacter(file) {
+
+    const reader = new FileReader();
+
+    reader.onload = function(event) {
+
+        const character =
+            JSON.parse(event.target.result);
+
+        const saveData =
+            JSON.parse(
+                localStorage.getItem(
+                    "d10Characters"
+                )
+            ) || {};
+
+        saveData[character.name] = {
+            stats: character.stats,
+            categoryOrder:
+                character.categoryOrder || [
+                    "body",
+                    "social",
+                    "mental",
+                    "other"
+                ]
+        };
+
+        localStorage.setItem(
+            "d10Characters",
+            JSON.stringify(saveData)
+        );
+
+        localStorage.setItem(
+            "lastCharacter",
+            character.name
+        );
+
+        refreshCharacterList();
+
+        document.getElementById(
+            "characterName"
+        ).value = character.name;
+
+        document.getElementById(
+            "characterList"
+        ).value = character.name;
+
+        document.getElementById(
+            "activeCharacterList"
+        ).value = character.name;
+
+        loadCharacter();
+    };
+
+    reader.readAsText(file);
+}
+
+function loadCharacter() {
+
+    const name =
+        document
+        .getElementById(
+            "characterName"
+        )
+        .value
+        .trim();
+
+    const saveData =
+        JSON.parse(
+            localStorage.getItem(
+                "d10Characters"
+            )
+        ) || {};
+
+    if (!saveData[name])
+        return;
+
+    if (Array.isArray(saveData[name])) {
+
+    // Old save format
+    stats = saveData[name];
+
+    categoryOrder = [
+        ...new Set(
+            stats.map(
+                stat =>
+                    (stat.category || "other")
+                        .trim()
+                        .toLowerCase()
+            )
+        )
+    ];
+} else {
+
+    // New save format
+    stats = saveData[name].stats;
+
+    const defaults = getDefaultStats();
+
+    stats.forEach(stat => {
+
+        const defaultStat =
+            defaults.find(
+                d => d.name === stat.name
+            );
+    
+        if (defaultStat) {
+
+            stat.maxValue =
+                defaultStat.maxValue;
+
+            if (enforceStatMaximums) {
+
+                stat.value = Math.min(
+                    stat.value,
+                    stat.maxValue
+                );
+
+            }
+        }
+
+    });
+
+    categoryOrder =
+        saveData[name].categoryOrder || [
+            "body",
+            "social",
+            "mental",
+            "other"
+        ];
+
+    enforceStatMaximums =
+        saveData[name]
+            .enforceStatMaximums ?? true;
+
+    document.getElementById(
+        "enforceMaximums"
+    ).checked =
+        enforceStatMaximums;
+
+    stats.forEach(stat => {
+
+        const category =
+            (stat.category || "other")
+                .trim()
+                .toLowerCase();
+
+        if (!categoryOrder.includes(category)) {
+            categoryOrder.push(category);
+        }
+
+    });
+}
+
+    renderEditor();
+
+    selectedStats = [];
+    selectedDice = 0;
+
+    updateSelectedStatsDisplay();
+
+    document.getElementById(
+        "activeCharacterList"
+    ).value = name;
+
+    document.getElementById(
+        "characterList"
+    ).value = name;
+
+    localStorage.setItem(
+        "lastCharacter",
+        name
+    );
+}
+
+function getDefaultCategoryOrder() {
+    return [
+        "body",
+        "social",
+        "mental",
+        "other"
+    ];
+}
+
+function refreshCharacterList() {
+
+    const editorSelect =
+        document.getElementById("characterList");
+
+    const activeSelect =
+        document.getElementById("activeCharacterList");
+
+    editorSelect.innerHTML =
+        '<option value="">New Character</option>';
+
+    const saveData =
+        JSON.parse(
+            localStorage.getItem(
+                "d10Characters"
+            )
+        ) || {};
+
+    const characterNames =
+        Object.keys(saveData);
+
+    if (characterNames.length === 0) {
+
+        activeSelect.innerHTML =
+            '<option value="">No Character</option>';
+
+    } else {
+
+        activeSelect.innerHTML = "";
+    }
+
+    characterNames
+        .forEach(name => {
+
+            editorSelect.innerHTML += `
+                <option value="${name}">
+                    ${name}
+                </option>
+            `;
+
+            activeSelect.innerHTML += `
+                <option value="${name}">
+                    ${name}
+                </option>
+            `;
+        });
+}
+
+let stats = getDefaultStats();
+
+function renderEditor() {
+
+    const editor =
+        document.getElementById("statEditor");
+
+    editor.innerHTML = "";
+
+    const categories = {};
+
+    stats.forEach((stat, index) => {
+
+        const category =
+            (stat.category || "Other")
+                .trim()
+                .toLowerCase();
+
+        if (!categories[category]) {
+            categories[category] = [];
+        }
+
+        categories[category].push({
+            stat,
+            index
+        });
+    });
+
+    categoryOrder
+        .filter(category => categories[category])
+        .forEach(category => {
+
+            editor.innerHTML += `
+                <div class="statColumn">
+                    <h4>
+                        ${category}
+
+                        <button
+                            onclick="moveCategoryUp('${category}')"
+                            style="
+                                width:35px;
+                                padding:0;
+                                background:#4CAF50;
+                                color:white;
+                                font-weight:bold;
+                            ">
+                            ▲
+                        </button>
+
+                        <button
+                            onclick="moveCategoryDown('${category}')"
+                            style="
+                                width:35px;
+                                padding:0;
+                                background:#1565c0;
+                                color:white;
+                                font-weight:bold;
+                            ">
+                            ▼
+                        </button>
+
+                    </h4>
+
+                    <div id="editor-${category}">
+                    </div>
+                </div>
+            `;
+        });
+
+    categoryOrder
+        .filter(category => categories[category])
+        .forEach(category => {
+    
+            const column =
+                document.getElementById(
+                    `editor-${category}`
+                );
+
+            categories[category]
+                .forEach(({stat,index}) => {
+
+                    column.innerHTML += `
+                        <div style="
+                            display:flex;
+                            gap:10px;
+                            margin-bottom:8px;
+                            align-items:center;
+                        ">
+
+                            <button
+                                onclick="removeStat(${index})"
+                                style="
+                                    background:#b33a3a;
+                                    width:35px;
+                                    padding:0;
+                                ">
+                                −
+                            </button>
+
+                            <input
+                                style="width:140px"
+                                value="${stat.name}"
+                                onchange="
+                                    stats[${index}].name=this.value
+                                "
+                            >
+
+                            <input
+                                style="width:70px"
+                                type="number"
+                                min="1"
+                                value="${stat.value}"
+                                oninput="
+                                    stats[${index}].value =
+                                        enforceStatMaximums
+                                            ? Math.min(
+                                                ${stat.maxValue || 10},
+                                                Math.max(
+                                                    1,
+                                                    Number(this.value)
+                                                )
+                                            )
+                                            : Math.max(
+                                                1,
+                                                Number(this.value)
+                                            );
+
+                                    this.value =
+                                        stats[${index}].value;
+
+                                    renderStatButtons();
+                                "
+                            >
+                            <input
+                                style="width:120px"
+                                value="${
+                                    (stat.category || '')
+                                        .charAt(0).toUpperCase() +
+                                    (stat.category || '')
+                                        .slice(1)
+                                        .toLowerCase()
+                                }"
+                                onchange="
+                                    stats[${index}].category =
+                                        this.value
+                                            .trim()
+                                            .toLowerCase();
+                                    
+                                    if (
+                                        !categoryOrder.includes(
+                                            stats[${index}].category
+                                        )
+                                    ) {
+                                        categoryOrder.push(
+                                            stats[${index}].category
+                                        );
+                                    }
+
+                                    renderEditor();
+                                "
+                            >
+
+                        </div>
+                    `;
+                });
+        });
+
+    renderStatButtons();
+}
+function removeStat(index) {
+
+    stats.splice(index, 1);
+
+    renderEditor();
+}
+
+function selectStat(name, value) {
+
+    selectedStats.push(name);
+    selectedDice += value;
+
+    document.getElementById(
+        "diceCount"
+    ).value = selectedDice;
+
+    document.getElementById(
+        "summaryStats"
+    ).textContent =
+        selectedStats.join(" + ") +
+        " | Dice Pool: " +
+        selectedDice;
+    }
+
+function rollDie() {
+
+    let roll =
+        Math.floor(Math.random() * 10) + 1;
+
+    if (forceTen) {
+
+        roll = Math.max(
+            roll,
+            Math.floor(Math.random() * 10) + 1
+        );
+    }
+
+    return Math.min(10, roll);
+}
+function createDieElement(value, difficulty) {
+    const die = document.createElement("div");
+
+    let dieColor = "#6b00bc";  // normal purple
+
+    if (value === 1) {
+        dieColor = "#c62828";  // red
+    }
+    else if (value === 10) {
+        dieColor = "#d4a017";  // gold
+    }
+    else if (value >= difficulty) {
+        dieColor = "#2e7d32";  // green
+    }
+    else {
+        dieColor = "#777777";  // failure stays gray
+}
+    die.className = "die";
+
+die.innerHTML = `
+<svg viewBox="0 0 178.97337 174.50076">
+    <g transform="translate(-24.026629,-19.499241)">
+        <path
+            fill="${dieColor}"
+            d="M 110.5,192.09563 C 106.95075,190.44708 100.67257,185.5909 86.107731,173.22818 83.691983,171.17768 79.561739,167.7 76.929412,165.5 74.297085,163.3 70.071954,159.76879 67.540233,157.65287 65.008513,155.53696 56.477552,148.52354 48.582542,142.0675 34.669339,130.69016 28,124.2728 28,122.26259 c 0,-0.53536 2.960257,-1.24981 6.578349,-1.58768 4.69669,-0.43858 9.487828,-1.9108 16.75,-5.14695 5.594408,-2.49296 11.847561,-5.38787 13.895895,-6.43312 3.705352,-1.89083 3.7713,-1.88821 13,0.51544 5.101666,1.32875 13.550756,3.93571 18.775756,5.79324 9.16622,3.25867 25.95291,7.64455 34.75,9.07918 2.3375,0.3812 4.23397,0.99104 4.21438,1.3552 -0.0952,1.76853 -3.07126,12.91826 -6.4494,24.1621 -10.22685,34.03917 -13.25153,43.41027 -14.09531,43.67021 -0.50582,0.15583 -2.71967,-0.55273 -4.91967,-1.57458 z m 9.08987,1.04978 c -0.29049,-0.47002 1.20317,-6.65752 3.31924,-13.75 7.96059,-26.68166 10.41414,-35.16533 12.9091,-44.63614 2.56371,-9.73177 2.56934,-9.74134 6.12393,-10.40165 1.95682,-0.36351 6.57259,-1.68313 10.25726,-2.93249 6.96259,-2.3608 17.2471,-9.32883 26.24401,-17.78102 C 181.16229,101.08985 183.57386,99 183.80246,99 c 0.22861,0 1.37907,0.855725 2.55659,1.90161 7.12259,6.32636 11.47101,9.90103 13.89095,11.41923 5.52737,3.46771 8.09793,0.63225 -52.70868,58.1404 -9.32727,8.82132 -18.10227,17.20142 -19.5,18.62244 -2.32529,2.36405 -6.17554,4.91632 -7.41656,4.91632 -0.2787,0 -0.7444,-0.38456 -1.03489,-0.85459 z m 4.91013,-73.357 c -2.75,-0.5149 -10.625,-2.66291 -17.5,-4.77336 -6.875,-2.11044 -17.7875,-5.33483 -24.25,-7.16531 C 76.2875,106.01925 71,104.01022 71,103.38522 c 0,-0.625 1.125,-3.680184 2.5,-6.789303 1.375,-3.109119 2.5,-6.045431 2.5,-6.525137 0,-0.479706 1.8,-4.732134 4,-9.449841 2.2,-4.717707 4,-8.860797 4,-9.206867 0,-0.34607 2.080029,-5.418311 4.622288,-11.271645 C 91.164546,54.289092 95.031311,45.225 97.2151,40 c 7.24687,-17.339096 7.38806,-17.583804 11.18445,-19.385307 2.53401,-1.202467 4.09094,-1.413936 5.33883,-0.725141 2.64644,1.460747 16.55895,15.847068 24.26162,25.087878 2.475,2.969231 6.1112,7.226495 8.08045,9.460586 2.99454,3.397267 11.9308,14.08921 20.44737,24.464609 2.80426,3.416311 11.27629,13.301795 13.01061,15.181263 0.80386,0.871138 1.46157,1.858162 1.46157,2.193386 0,1.323605 -11.57501,11.504026 -18.59388,16.353646 -11.12251,7.68499 -23.05523,9.93814 -37.90612,7.15749 z m -97.939532,-2.12054 c -2.13448,-1.56077 -3.155441,-9.21464 -2.135981,-16.01288 0.601427,-4.010605 1.68339,-5.441226 10.819184,-14.305619 C 40.826681,81.932217 47.243289,75.7 49.5028,73.5 51.762311,71.3 59.820659,63.65 67.410241,56.5 74.999822,49.35 84.775418,40.0125 89.133786,35.75 96.548327,28.498551 99,26.786862 99,28.861685 c 0,0.473926 -1.316981,3.766224 -2.926625,7.316218 -1.609644,3.549994 -3.826909,8.899735 -4.927256,11.888315 C 90.045772,51.054798 86.177857,60.7 82.550751,69.5 c -3.627106,8.8 -8.215555,20.05 -10.196553,25 -1.980998,4.95 -4.105619,9.62807 -4.721379,10.39571 -1.300225,1.62093 -17.642852,9.43087 -25.539369,12.20495 -6.309196,2.21644 -12.946082,2.4588 -15.532982,0.56721 z M 192.5,103.17785 C 185.04035,96.816678 175.23518,86.481424 169.12053,78.534446 167.67924,76.661256 160.724,68.313205 153.66443,59.983221 141.55411,45.69355 138.96795,41.675234 144.21879,45.306805 c 1.25467,0.867747 13.15037,12.291204 26.4349,25.385459 19.15731,18.882927 25.00104,25.267771 28.25,30.865906 2.25297,3.88199 4.09631,7.36949 4.09631,7.75 0,1.94326 -3.27339,0.0321 -10.5,-6.13032 z"
+        />
+    </g>
+</svg>
+<span class="die-number">${value}</span>
+`;
+
+    return die;
+}
+
+function rollDice() {
+
+    const count = parseInt(document.getElementById("diceCount").value);
+    const difficultyInput =
+    document.getElementById("difficulty");
+
+difficultyInput.value =
+    Math.min(10, Math.max(1,
+        parseInt(difficultyInput.value)));
+
+const difficulty =
+    parseInt(difficultyInput.value);
+
+    if (count < 1) return;
+    if (difficulty < 1 || difficulty > 10) return;
+
+    let successes = 0;
+
+    const mainDice = [];
+    const bonusRows = [];
+
+    document.getElementById("mainDice").innerHTML = "";
+    document.getElementById("bonusDiceContainer").innerHTML = "";
+
+    let pendingExplosions = [];
+
+    // Main Dice
+
+    for (let i = 0; i < count; i++) {
+
+        const roll = rollDie();
+
+        mainDice.push(roll);
+
+        if (roll === 1) {
+            successes--;
+        }
+        else if (roll >= difficulty) {
+            successes++;
+        }
+
+        if (roll === 10) {
+            pendingExplosions.push(true);
+        }
+    }
+
+    mainDice.forEach(value => {
+        document.getElementById("mainDice")
+            .appendChild(createDieElement(value, difficulty));
+    });
+
+    // Bonus Dice Chains
+
+    let explosionDepth = 0;
+
+    while (
+        pendingExplosions.length > 0 &&
+        explosionDepth < 20
+    ) {
+        explosionDepth++;
+
+        const currentRow = [];
+        const nextExplosions = [];
+
+        for (let i = 0; i < pendingExplosions.length; i++) {
+
+            const roll = rollDie();
+
+            currentRow.push(roll);
+
+            if (roll >= difficulty) {
+                successes++;
+            }
+
+            if (roll === 10) {
+                nextExplosions.push(true);
+            }
+        }
+
+        bonusRows.push(currentRow);
+        pendingExplosions = nextExplosions;
+    }
+
+    bonusRows.forEach(row => {
+
+        const rowDiv = document.createElement("div");
+        rowDiv.className = "dice-row";
+
+        row.forEach(value => {
+            rowDiv.appendChild(
+                createDieElement(value, difficulty)
+            );
+        });
+
+        document.getElementById("bonusDiceContainer")
+            .appendChild(rowDiv);
+    });
+
+    const successDisplay = document.getElementById("successDisplay");
+
+successDisplay.textContent =
+    `${successes} ${
+        Math.abs(successes) === 1
+            ? "Success"
+            : "Successes"
+    }`;
+
+if (successes > 0) {
+    successDisplay.style.color = "#7CFF7C";
+    successDisplay.style.borderColor = "#2e7d32";
+}
+else if (successes < 0) {
+    successDisplay.style.color = "#ff6b6b";
+    successDisplay.style.borderColor = "#c62828";
+}
+else {
+    successDisplay.style.color = "#ffffff";
+    successDisplay.style.borderColor = "#666";
+}
+
+successDisplay.animate(
+[
+    { transform: "scale(0.9)" },
+    { transform: "scale(1.05)" },
+    { transform: "scale(1.0)" }
+],
+{
+    duration: 250
+});
+
+    if (pendingHistoryRoll) {
+
+        addHistory(
+            pendingHistoryRoll.count,
+            pendingHistoryRoll.difficulty,
+            pendingHistoryRoll.successes,
+            pendingHistoryRoll.mainDice,
+            pendingHistoryRoll.bonusRows,
+            pendingHistoryRoll.luckyRoll
+        );
+    }
+
+    pendingHistoryRoll = {
+        count,
+        difficulty,
+        successes,
+        mainDice: [...mainDice],
+        bonusRows: [...bonusRows],
+        luckyRoll: forceTen
+    };
+
+    localStorage.setItem(
+        "pendingHistoryRoll",
+        JSON.stringify(pendingHistoryRoll)
+    );
+
+
+    selectedStats = [];
+    selectedDice = 0;
+
+    updateSelectedStatsDisplay();
+
+    forceTen = false;
+
+    document.getElementById(
+        "luckIndicator"
+    ).style.display = "none";
+
+
+}
+
+function addHistory(count, difficulty, successes, mainDice, bonusRows, luckyRoll) {
+
+    const history = document.getElementById("history");
+
+    const entry = document.createElement("div");
+    entry.className = "history-entry";
+
+    const timestamp = new Date().toLocaleTimeString();
+
+    let html = "";
+
+    if (luckyRoll) {
+        html += `
+            <div style="
+                color:#7CFF7C;
+                font-weight:bold;
+                margin-bottom:5px;
+            ">
+                🍀 Lucky Roll Active
+            </div>
+        `;
+    }
+
+    html += `
+        <div class="history-time">${timestamp}</div>
+        <strong>${count} Dice @ Difficulty ${difficulty}</strong><br>
+        Successes: ${successes}
+    `;
+
+    html += `
+        <br>
+        Main: ${mainDice.join(", ")}
+    `;
+
+    bonusRows.forEach((row, index) => {
+        html += `<br>Exploding Dice ${index + 1}: ${row.join(", ")}`;
+    });
+
+    entry.innerHTML = html;
+
+    rollHistory.unshift(html);
+
+    localStorage.setItem(
+        "rollHistory",
+        JSON.stringify(rollHistory)
+    );
+
+    history.prepend(entry);
+
+
+
+while (rollHistory.length > MAX_HISTORY) {
+    rollHistory.pop();
+}
+
+localStorage.setItem(
+    "rollHistory",
+    JSON.stringify(rollHistory)
+);
+
+}
+
+rollButton.addEventListener("click", rollDice);
+
+clearHistoryButton.addEventListener("click", () => {
+
+    document.getElementById(
+        "history"
+    ).innerHTML = "";
+
+    rollHistory = [];
+
+    localStorage.removeItem(
+    "rollHistory"
+    );
+ 
+    localStorage.removeItem(
+        "pendingHistoryRoll"
+    );
+});
+
+document.addEventListener("keydown", (event) => {
+
+    if (event.key === "Enter") {
+        rollDice();
+    }
+
+});
+
+document
+.querySelector(".character-button")
+.addEventListener("click", () => {
+
+    const panel =
+        document.getElementById("editorPanel");
+
+    panel.style.display =
+        panel.style.display === "none"
+            ? "block"
+            : "none";
+});
+
+document
+.getElementById("activeCharacterList")
+.addEventListener("change", function() {
+
+    document.getElementById(
+        "characterName"
+    ).value = this.value;
+
+    document.getElementById(
+        "characterList"
+    ).value = this.value;
+
+    loadCharacter();
+});
+
+document
+.getElementById("addStatButton")
+.addEventListener("click", () => {
+
+    stats.push({
+        category: "Other",
+        name: "New Stat",
+        value: 1,
+        maxValue: 10
+    });
+    renderEditor();
+});
+
+document
+.getElementById("saveStats")
+.addEventListener(
+    "click",
+    saveCharacter
+);
+
+document
+.getElementById("deleteCharacter")
+.addEventListener(
+    "click",
+    deleteCharacter
+);
+
+document
+.getElementById("characterList")
+.addEventListener("change", function() {
+
+    if (this.value === "") {
+
+        stats = getDefaultStats();
+        categoryOrder =
+            getDefaultCategoryOrder();
+
+        selectedStats = [];
+        selectedDice = 0;
+
+        document.getElementById(
+            "characterName"
+        ).value = "";
+
+        refreshCharacterList();
+
+        if (
+            document.getElementById(
+                "activeCharacterList"
+            ).options.length > 0
+        ) {
+
+            document.getElementById(
+                "activeCharacterList"
+            ).selectedIndex = -1;
+        }
+
+
+        renderEditor();
+        renderStatButtons();
+
+        updateSelectedStatsDisplay();
+
+        return;
+    }
+
+    document.getElementById(
+        "characterName"
+    ).value = this.value;
+
+    document.getElementById(
+        "activeCharacterList"
+    ).value = this.value;
+
+    loadCharacter();
+});
+
+
+
+document
+.getElementById(
+    "exportCharacter"
+)
+.addEventListener(
+    "click",
+    exportCharacter
+);
+
+document
+.getElementById(
+    "importCharacter"
+)
+.addEventListener(
+    "click",
+    () => {
+        document
+            .getElementById(
+                "importFile"
+            )
+            .click();
+    }
+);
+
+document
+.getElementById(
+    "importFile"
+)
+.addEventListener(
+    "change",
+    function() {
+
+        if (
+            this.files &&
+            this.files.length > 0
+        ) {
+            importCharacter(
+                this.files[0]
+            );
+        }
+    }
+);
+
+document
+.getElementById("difficulty")
+.addEventListener("input", function() {
+
+    this.value = Math.min(
+        10,
+        Math.max(
+            1,
+            Number(this.value)
+        )
+    );
+});
+
+document.getElementById(
+    "enforceMaximums"
+).checked =
+    enforceStatMaximums;
+
+document.getElementById(
+    "enforceMaximums"
+).addEventListener(
+    "change",
+    function() {
+
+        if (this.checked) {
+
+            const overMaxStats =
+                stats.filter(
+                    stat =>
+                        stat.value >
+                        stat.maxValue
+                );
+
+            if (overMaxStats.length > 0) {
+
+                const statList =
+                    overMaxStats
+                        .map(
+                            stat =>
+                                `${stat.name} (${stat.value} → ${stat.maxValue})`
+                        )
+                        .join("\n");
+
+                const confirmEnable =
+                    confirm(
+                        "The following stats exceed their maximums:\n\n" +
+                        statList +
+                        "\n\nEnable maximums and reduce these stats?"
+                    );
+
+                if (!confirmEnable) {
+
+                    this.checked = false;
+                    return;
+                }
+
+                overMaxStats.forEach(stat => {
+
+                    stat.value =
+                        stat.maxValue;
+
+                });
+            }
+        }
+
+        enforceStatMaximums =
+            this.checked;
+
+        renderEditor();
+        renderStatButtons();
+    }
+);
+
+document.addEventListener("keydown", e => {
+
+    if (e.ctrlKey && e.shiftKey && e.key === "L") {
+
+        forceTen = !forceTen;
+
+        document.getElementById(
+            "luckIndicator"
+        ).style.display =
+            forceTen
+                ? "block"
+                : "none";
+    }
+
+});
+
+refreshCharacterList();
+
+const lastCharacter =
+    localStorage.getItem("lastCharacter");
+
+if (lastCharacter) {
+
+    document.getElementById(
+        "characterName"
+    ).value = lastCharacter;
+
+    document.getElementById(
+        "activeCharacterList"
+    ).value = lastCharacter;
+
+    document.getElementById(
+        "characterList"
+    ).value = lastCharacter;
+
+    loadCharacter();
+}
+
+document.addEventListener("drop", event => {
+
+    event.preventDefault();
+
+    if (
+        event.dataTransfer.files &&
+        event.dataTransfer.files.length > 0
+    ) {
+
+        const file =
+            event.dataTransfer.files[0];
+
+        if (
+            file.name
+                .toLowerCase()
+                .endsWith(".json")
+        ) {
+
+            importCharacter(file);
+        }
+    }
+});
+
+renderEditor();
+
+loadHistory();
+
+if (pendingHistoryRoll) {
+
+    addHistory(
+        pendingHistoryRoll.count,
+        pendingHistoryRoll.difficulty,
+        pendingHistoryRoll.successes,
+        pendingHistoryRoll.mainDice,
+        pendingHistoryRoll.bonusRows,
+        pendingHistoryRoll.luckyRoll
+    );
+
+    pendingHistoryRoll = null;
+
+    localStorage.removeItem(
+        "pendingHistoryRoll"
+    );
+}
+
+</script>
+
+</body>
+</html>
