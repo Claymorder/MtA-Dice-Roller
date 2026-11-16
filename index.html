@@ -1196,26 +1196,48 @@ function renderEditor() {
                                 type="number"
                                 min="1"
                                 value="${stat.value}"
-                                onchange="
-                                    stats[${index}].value =
-                                        enforceStatMaximums
-                                            ? Math.min(
-                                                ${stat.maxValue || 10},
-                                                Math.max(
+                                oninput="
+                                        stats[${index}].value =
+                                            enforceStatMaximums
+                                                ? Math.min(
+                                                    ${stat.maxValue || 10},
+                                                    Math.max(
+                                                        1,
+                                                        Number(this.value) || 1
+                                                    )
+                                                )
+                                                : Math.max(
+                                                    1,
+                                                    Number(this.value) || 1
+                                                );
+
+                                        this.value =
+                                            stats[${index}].value;
+
+                                        renderStatButtons();
+                                    "
+
+                                    onblur="
+                                        stats[${index}].value =
+                                            enforceStatMaximums
+                                                ? Math.min(
+                                                    ${stat.maxValue || 10},
+                                                    Math.max(
+                                                        1,
+                                                        Number(this.value)
+                                                    )
+                                                )
+                                                : Math.max(
                                                     1,
                                                     Number(this.value)
-                                                )
-                                            )
-                                            : Math.max(
-                                                1,
-                                                Number(this.value)
-                                            );
+                                                );
 
-                                    this.value =
-                                        stats[${index}].value;
+                                        this.value =
+                                            stats[${index}].value;
 
-                                    renderStatButtons();
-                                "
+                                        renderStatButtons();
+                                    "
+                                >
                             >
                             <input
                                 style="width:120px"
