@@ -1196,7 +1196,7 @@ function renderEditor() {
                                 type="number"
                                 min="1"
                                 value="${stat.value}"
-                                oninput="
+                                onchange="
                                     stats[${index}].value =
                                         enforceStatMaximums
                                             ? Math.min(
