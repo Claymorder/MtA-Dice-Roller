@@ -276,6 +276,38 @@ button {
     z-index: 1000;
 }
 
+@media (max-width: 768px) {
+
+    #statEditor {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    #statButtons {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #characterList,
+    #characterName,
+    #activeCharacterList {
+        width: 100%;
+    }
+
+    .editorButton {
+        width: 100%;
+    }
+
+    .statColumn {
+        min-width: 0;
+    }
+}
+
 </style>
 </head>
 
