@@ -46,6 +46,20 @@ h1 {
     overflow-y: auto;
 }
 
+#toggleLayoutMode {
+    width: 120px;
+    height: 40px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+
+    font-size: 16px;
+    white-space: nowrap;
+    background: #ffcba4;
+}
+
 #characterPanel summary,
 .history summary {
     top: 0;
@@ -377,6 +391,14 @@ button {
         accept=".json"
         style="display:none;">
 
+    <div>
+    <button
+        id="toggleLayoutMode"
+        class="editorButton">
+        Edit Layout
+    </button>
+    </div>
+
         <div id="statEditor"></div>
 
     <div class="field">
@@ -494,6 +516,7 @@ let selectedDice = 0;
 let forceTen = false;
 let enforceStatMaximums = true;
 let categoryOrder = getDefaultCategoryOrder();
+let editLayoutMode = false;
 
 let pendingHistoryRoll =
     JSON.parse(
@@ -1120,31 +1143,31 @@ function renderEditor() {
                 <div class="statColumn">
                     <h4>
                         ${category}
+                        ${editLayoutMode ? `
+                            <button
+                                onclick="moveCategoryUp('${category}')"
+                                style="
+                                    width:35px;
+                                    padding:0;
+                                    background:#4CAF50;
+                                    color:white;
+                                    font-weight:bold;
+                                ">
+                                ▲
+                            </button>
 
-                        <button
-                            onclick="moveCategoryUp('${category}')"
-                            style="
-                                width:35px;
-                                padding:0;
-                                background:#4CAF50;
-                                color:white;
-                                font-weight:bold;
-                            ">
-                            ▲
-                        </button>
-
-                        <button
-                            onclick="moveCategoryDown('${category}')"
-                            style="
-                                width:35px;
-                                padding:0;
-                                background:#1565c0;
-                                color:white;
-                                font-weight:bold;
-                            ">
-                            ▼
-                        </button>
-
+                            <button
+                                onclick="moveCategoryDown('${category}')"
+                                style="
+                                    width:35px;
+                                    padding:0;
+                                    background:#1565c0;
+                                    color:white;
+                                    font-weight:bold;
+                                ">
+                                ▼
+                            </button>
+                        ` : ''}
                     </h4>
 
                     <div id="editor-${category}">
@@ -1168,20 +1191,42 @@ function renderEditor() {
                     column.innerHTML += `
                         <div style="
                             display:flex;
+                            justify-content:center;
                             gap:10px;
                             margin-bottom:8px;
                             align-items:center;
                         ">
+                             ${editLayoutMode ? `
+                                <button
+                                    onclick="removeStat(${index})"
+                                    style="
+                                        background:#b33a3a;
+                                        width:35px;
+                                        padding:0;
+                                    ">
+                                    −
+                                </button>
 
-                            <button
-                                onclick="removeStat(${index})"
-                                style="
-                                    background:#b33a3a;
-                                    width:35px;
-                                    padding:0;
-                                ">
-                                −
-                            </button>
+                                <button
+                                    onclick="moveStatUp(${index})"
+                                    style="
+                                        background:#4CAF50;
+                                        width:30px;
+                                        padding:0;
+                                    ">
+                                    ▲
+                                </button>
+
+                                <button
+                                    onclick="moveStatDown(${index})"
+                                    style="
+                                        background:#1565c0;
+                                        width:30px;
+                                        padding:0;
+                                    ">
+                                    ▼
+                                </button>
+                            ` : ''}
 
                             <input
                                 style="width:140px"
@@ -1192,7 +1237,7 @@ function renderEditor() {
                             >
 
                             <input
-                                style="width:70px"
+                                style="width:60px"
                                 type="number"
                                 min="1"
                                 max="${ enforceStatMaximums ? (stat.maxValue || 10) : '' }"
@@ -1219,7 +1264,7 @@ function renderEditor() {
                                 "
                             >
                             <input
-                                style="width:120px"
+                                style="width:90px"
                                 value="${
                                     (stat.category || '')
                                         .charAt(0).toUpperCase() +
@@ -1254,6 +1299,61 @@ function renderEditor() {
 
     renderStatButtons();
 }
+
+function moveStatUp(index) {
+
+    if (index <= 0) return;
+
+    const currentCategory =
+        stats[index].category;
+
+    if (
+        stats[index - 1].category ===
+        currentCategory
+    ) {
+
+        [
+            stats[index - 1],
+            stats[index]
+        ] = [
+            stats[index],
+            stats[index - 1]
+        ];
+
+        renderEditor();
+        renderStatButtons();
+    }
+}
+
+function moveStatDown(index) {
+
+    if (
+        index >= stats.length - 1
+    ) {
+        return;
+    }
+
+    const currentCategory =
+        stats[index].category;
+
+    if (
+        stats[index + 1].category ===
+        currentCategory
+    ) {
+
+        [
+            stats[index],
+            stats[index + 1]
+        ] = [
+            stats[index + 1],
+            stats[index]
+        ];
+
+        renderEditor();
+        renderStatButtons();
+    }
+}
+
 function removeStat(index) {
 
     stats.splice(index, 1);
@@ -1291,7 +1391,7 @@ function rollDie() {
         );
     }
 
-    return Math.min(10, roll);
+    return Math.min(10, roll)
 }
 function createDieElement(value, difficulty) {
     const die = document.createElement("div");
@@ -1333,6 +1433,9 @@ function rollDice() {
     const difficultyInput =
     document.getElementById("difficulty");
 
+    let hitTotalDiceLimit = false;
+    let hitExplosionDepthLimit = false;
+
 difficultyInput.value =
     Math.min(10, Math.max(1,
         parseInt(difficultyInput.value)));
@@ -1347,6 +1450,9 @@ const difficulty =
 
     const mainDice = [];
     const bonusRows = [];
+    let totalDiceRolled = 0;
+    const MAX_TOTAL_DICE = 6000;
+
 
     document.getElementById("mainDice").innerHTML = "";
     document.getElementById("bonusDiceContainer").innerHTML = "";
@@ -1357,9 +1463,16 @@ const difficulty =
 
     for (let i = 0; i < count; i++) {
 
+        if (totalDiceRolled >= MAX_TOTAL_DICE) {
+            hitTotalDiceLimit = true;
+            break;
+        }
+
         const roll = rollDie();
 
         mainDice.push(roll);
+
+        totalDiceRolled++;
 
         if (roll === 1) {
             successes--;
@@ -1393,9 +1506,17 @@ const difficulty =
 
         for (let i = 0; i < pendingExplosions.length; i++) {
 
+            if (totalDiceRolled >= MAX_TOTAL_DICE) {
+                hitTotalDiceLimit = true;
+                pendingExplosions = [];
+                break;
+            }
+
             const roll = rollDie();
 
             currentRow.push(roll);
+
+            totalDiceRolled++;
 
             if (roll >= difficulty) {
                 successes++;
@@ -1404,6 +1525,12 @@ const difficulty =
             if (roll === 10) {
                 nextExplosions.push(true);
             }
+        }
+        if (
+            pendingExplosions.length > 0 &&
+            explosionDepth >= 20
+        ) {
+            hitExplosionDepthLimit = true;
         }
 
         bonusRows.push(currentRow);
@@ -1433,6 +1560,37 @@ successDisplay.textContent =
             ? "Success"
             : "Successes"
     }`;
+
+if (hitTotalDiceLimit) {
+
+    successDisplay.innerHTML += `
+        <div style="
+            color:#ff6b6b;
+            font-size:18px;
+            margin-top:10px;
+        ">
+            ⚠ Roll stopped at the ${totalDiceRolled.toLocaleString()} dice limit.
+        </div>
+    `;
+}
+
+if (hitExplosionDepthLimit) {
+
+    successDisplay.innerHTML += `
+        <div style="
+            color:#ff6b6b;
+            font-size:18px;
+            margin-top:10px;
+        ">
+            ⚠ Roll stopped because the explosion chain reached the maximum depth (20).
+        </div>
+    `;
+}
+
+// console.log(
+//     "Total dice rolled:",
+//     totalDiceRolled
+// );
 
 if (successes > 0) {
     successDisplay.style.color = "#7CFF7C";
@@ -1870,6 +2028,22 @@ document.addEventListener("drop", event => {
             importCharacter(file);
         }
     }
+});
+
+document
+.getElementById("toggleLayoutMode")
+.addEventListener("click", () => {
+
+    editLayoutMode = !editLayoutMode;
+
+    document.getElementById(
+        "toggleLayoutMode"
+    ).textContent =
+        editLayoutMode
+            ? "Done Editing"
+            : "Edit Layout";
+
+    renderEditor();
 });
 
 document.addEventListener("touchstart", function(event) {
