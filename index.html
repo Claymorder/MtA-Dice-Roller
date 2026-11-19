@@ -1653,7 +1653,9 @@ successDisplay.animate(
             pendingHistoryRoll.successes,
             pendingHistoryRoll.mainDice,
             pendingHistoryRoll.bonusRows,
-            pendingHistoryRoll.luckyRoll
+            pendingHistoryRoll.luckyRoll,
+            pendingHistoryRoll.isInitiative,
+            pendingHistoryRoll.initiative
         );
     }
 
@@ -1723,6 +1725,38 @@ function rollInitiative() {
         roll +
         dexterity +
         wits;
+   
+    if (pendingHistoryRoll) {
+
+        addHistory(
+            pendingHistoryRoll.count,
+            pendingHistoryRoll.difficulty,
+            pendingHistoryRoll.successes,
+            pendingHistoryRoll.mainDice,
+            pendingHistoryRoll.bonusRows,
+            pendingHistoryRoll.luckyRoll,
+            pendingHistoryRoll.isInitiative,
+            pendingHistoryRoll.initiative
+        );
+    }
+
+    pendingHistoryRoll = {
+
+        isInitiative: true,
+
+        initiative: {
+            total: initiative,
+            roll: roll,
+            dexterity: dexterity,
+            wits: wits
+        }
+
+    };
+
+    localStorage.setItem(
+        "pendingHistoryRoll",
+        JSON.stringify(pendingHistoryRoll)
+    );
 
     const successDisplay =
         document.getElementById(
@@ -1763,7 +1797,17 @@ function rollInitiative() {
 }
 
 
-function addHistory(count, difficulty, successes, mainDice, bonusRows, luckyRoll) {
+function addHistory(
+    count,
+    difficulty,
+    successes,
+    mainDice,
+    bonusRows,
+    luckyRoll,
+    isInitiative = false,
+    initiativeData = null
+) 
+{
 
     const history = document.getElementById("history");
 
@@ -1773,6 +1817,34 @@ function addHistory(count, difficulty, successes, mainDice, bonusRows, luckyRoll
     const timestamp = new Date().toLocaleTimeString();
 
     let html = "";
+
+    if (isInitiative) {
+
+        html += `
+            <div class="history-time">${timestamp}</div>
+
+            <strong>⚡ Initiative Roll</strong><br>
+
+            Total: ${initiativeData.total}<br>
+
+            D10: ${initiativeData.roll}
+            | Dex: ${initiativeData.dexterity}
+            | Wits: ${initiativeData.wits}
+        `;
+
+        entry.innerHTML = html;
+
+        rollHistory.unshift(html);
+
+        history.prepend(entry);
+
+        localStorage.setItem(
+            "rollHistory",
+            JSON.stringify(rollHistory)
+        );
+
+        return;
+    }
 
     if (luckyRoll) {
         html += `
@@ -2192,7 +2264,9 @@ if (pendingHistoryRoll) {
         pendingHistoryRoll.successes,
         pendingHistoryRoll.mainDice,
         pendingHistoryRoll.bonusRows,
-        pendingHistoryRoll.luckyRoll
+        pendingHistoryRoll.luckyRoll,
+        pendingHistoryRoll.isInitiative,
+        pendingHistoryRoll.initiative
     );
 
     pendingHistoryRoll = null;
