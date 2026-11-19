@@ -1447,6 +1447,8 @@ const difficulty =
     if (difficulty < 1 || difficulty > 10) return;
 
     let successes = 0;
+    let positiveSuccesses = 0;
+    let botches = 0;
 
     const mainDice = [];
     const bonusRows = [];
@@ -1476,9 +1478,11 @@ const difficulty =
 
         if (roll === 1) {
             successes--;
+            botches++;
         }
         else if (roll >= difficulty) {
             successes++;
+            positiveSuccesses++;
         }
 
         if (roll === 10) {
@@ -1520,6 +1524,7 @@ const difficulty =
 
             if (roll >= difficulty) {
                 successes++;
+                positiveSuccesses++;
             }
 
             if (roll === 10) {
@@ -1554,12 +1559,24 @@ const difficulty =
 
     const successDisplay = document.getElementById("successDisplay");
 
-successDisplay.textContent =
-    `${successes} ${
-        Math.abs(successes) === 1
-            ? "Success"
-            : "Successes"
-    }`;
+if (
+    positiveSuccesses === 0 &&
+    botches > 0
+) {
+
+    successDisplay.textContent =
+        "Botched";
+
+} else {
+
+    successDisplay.textContent =
+        `${successes} ${
+            Math.abs(successes) === 1
+                ? "Success"
+                : "Successes"
+        }`;
+
+}
 
 if (hitTotalDiceLimit) {
 
