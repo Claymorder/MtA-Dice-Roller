@@ -1655,7 +1655,8 @@ successDisplay.animate(
             pendingHistoryRoll.bonusRows,
             pendingHistoryRoll.luckyRoll,
             pendingHistoryRoll.isInitiative,
-            pendingHistoryRoll.initiative
+            pendingHistoryRoll.initiative,
+            pendingHistoryRoll.botched
         );
     }
 
@@ -1665,7 +1666,10 @@ successDisplay.animate(
         successes,
         mainDice: [...mainDice],
         bonusRows: [...bonusRows],
-        luckyRoll: forceTen
+        luckyRoll: forceTen,
+        botched:
+            positiveSuccesses === 0 &&
+            botches > 0
     };
 
     localStorage.setItem(
@@ -1736,7 +1740,8 @@ function rollInitiative() {
             pendingHistoryRoll.bonusRows,
             pendingHistoryRoll.luckyRoll,
             pendingHistoryRoll.isInitiative,
-            pendingHistoryRoll.initiative
+            pendingHistoryRoll.initiative,
+            pendingHistoryRoll.botched
         );
     }
 
@@ -1805,7 +1810,8 @@ function addHistory(
     bonusRows,
     luckyRoll,
     isInitiative = false,
-    initiativeData = null
+    initiativeData = null,
+    botched = false
 ) 
 {
 
@@ -1861,7 +1867,11 @@ function addHistory(
     html += `
         <div class="history-time">${timestamp}</div>
         <strong>${count} Dice @ Difficulty ${difficulty}</strong><br>
-        Successes: ${successes}
+        ${
+            botched
+                ? "Botched"
+                : `Successes: ${successes}`
+        }
     `;
 
     html += `
@@ -2266,7 +2276,8 @@ if (pendingHistoryRoll) {
         pendingHistoryRoll.bonusRows,
         pendingHistoryRoll.luckyRoll,
         pendingHistoryRoll.isInitiative,
-        pendingHistoryRoll.initiative
+        pendingHistoryRoll.initiative,
+        pendingHistoryRoll.botched
     );
 
     pendingHistoryRoll = null;
