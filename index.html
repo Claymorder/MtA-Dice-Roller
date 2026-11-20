@@ -1248,7 +1248,8 @@ function renderEditor() {
                                 style="width:${statNameWidth}px"
                                 value="${stat.name}"
                                 onchange="
-                                    stats[${index}].name=this.value
+                                    stats[${index}].name=
+                                    this.value.trim();
 
                                     renderEditor();
                                 "
@@ -2031,7 +2032,32 @@ document
 
 document.addEventListener("keydown", (event) => {
 
+    const activeElement =
+        document.activeElement;
+
+    if (
+        activeElement &&
+        (
+            activeElement.tagName === "INPUT" ||
+            activeElement.tagName === "TEXTAREA" ||
+            activeElement.tagName === "SELECT"
+        )
+    ) {
+        return;
+    }
+
     if (event.code !== "Space") {
+        return;
+    }
+
+    event.preventDefault();
+
+    rollDice();
+});
+
+document.addEventListener("keydown", (event) => {
+
+    if (event.key !== "Enter") {
         return;
     }
 
@@ -2047,13 +2073,10 @@ document.addEventListener("keydown", (event) => {
         )
     ) {
 
+        event.preventDefault();
+
         activeElement.blur();
-        return;
     }
-
-    event.preventDefault();
-
-    rollDice();
 });
 
 document
@@ -2372,6 +2395,19 @@ document.addEventListener("touchstart", function(event) {
         !event.target.closest("textarea")
     ) {
         activeElement.blur();
+    }
+});
+
+document.addEventListener("focusout", (event) => {
+
+    if (
+        event.target &&
+        event.target.tagName === "INPUT" &&
+        event.target.type !== "number"
+    ) {
+
+        event.target.value =
+            event.target.value.trim();
     }
 });
 
