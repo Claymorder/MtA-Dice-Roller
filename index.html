@@ -1404,7 +1404,8 @@ function rollDie() {
         );
     }
 
-    return Math.min(10, roll)
+    <!--return Math.min(10, roll)-->
+    return 10
 }
 function createDieElement(value, difficulty) {
     const die = document.createElement("div");
@@ -1645,10 +1646,16 @@ successDisplay.animate(
     duration: 250
 });
 
-    if (pendingHistoryRoll) {
+    const characterName =
+        document.getElementById(
+            "characterName"
+        ).value.trim() ||
+        "No Character";
 
+    if (pendingHistoryRoll) {
         addHistory(
             pendingHistoryRoll.count,
+            pendingHistoryRoll.characterName,
             pendingHistoryRoll.difficulty,
             pendingHistoryRoll.successes,
             pendingHistoryRoll.mainDice,
@@ -1656,11 +1663,20 @@ successDisplay.animate(
             pendingHistoryRoll.luckyRoll,
             pendingHistoryRoll.isInitiative,
             pendingHistoryRoll.initiative,
-            pendingHistoryRoll.botched
+            pendingHistoryRoll.botched,
+            pendingHistoryRoll.hitTotalDiceLimit,
+            pendingHistoryRoll.hitExplosionDepthLimit
+        );
+
+        pendingHistoryRoll = null;
+
+        localStorage.removeItem(
+            "pendingHistoryRoll"
         );
     }
 
     pendingHistoryRoll = {
+        characterName,
         count,
         difficulty,
         successes,
@@ -1669,7 +1685,10 @@ successDisplay.animate(
         luckyRoll: forceTen,
         botched:
             positiveSuccesses === 0 &&
-            botches > 0
+            botches > 0,
+
+        hitTotalDiceLimit,
+        hitExplosionDepthLimit
     };
 
     localStorage.setItem(
@@ -1729,11 +1748,17 @@ function rollInitiative() {
         roll +
         dexterity +
         wits;
+
+    const characterName =
+        document.getElementById(
+            "characterName"
+        ).value.trim() ||
+        "No Character";
    
     if (pendingHistoryRoll) {
-
         addHistory(
             pendingHistoryRoll.count,
+            pendingHistoryRoll.characterName,
             pendingHistoryRoll.difficulty,
             pendingHistoryRoll.successes,
             pendingHistoryRoll.mainDice,
@@ -1741,21 +1766,27 @@ function rollInitiative() {
             pendingHistoryRoll.luckyRoll,
             pendingHistoryRoll.isInitiative,
             pendingHistoryRoll.initiative,
-            pendingHistoryRoll.botched
+            pendingHistoryRoll.botched,
+            pendingHistoryRoll.hitTotalDiceLimit,
+            pendingHistoryRoll.hitExplosionDepthLimit
+        );
+
+        pendingHistoryRoll = null;
+
+        localStorage.removeItem(
+            "pendingHistoryRoll"
         );
     }
 
     pendingHistoryRoll = {
-
+        characterName,
         isInitiative: true,
-
         initiative: {
             total: initiative,
             roll: roll,
             dexterity: dexterity,
             wits: wits
         }
-
     };
 
     localStorage.setItem(
@@ -1804,6 +1835,7 @@ function rollInitiative() {
 
 function addHistory(
     count,
+    characterName,
     difficulty,
     successes,
     mainDice,
@@ -1811,7 +1843,9 @@ function addHistory(
     luckyRoll,
     isInitiative = false,
     initiativeData = null,
-    botched = false
+    botched = false,
+    hitTotalDiceLimit = false,
+    hitExplosionDepthLimit = false
 ) 
 {
 
@@ -1828,6 +1862,9 @@ function addHistory(
 
         html += `
             <div class="history-time">${timestamp}</div>
+
+            <strong>Character:</strong>
+            ${characterName}<br>
 
             <strong>⚡ Initiative Roll</strong><br>
 
@@ -1866,13 +1903,34 @@ function addHistory(
 
     html += `
         <div class="history-time">${timestamp}</div>
+
+        <strong>Character:</strong>
+        ${characterName}<br>
+
         <strong>${count} Dice @ Difficulty ${difficulty}</strong><br>
+
         ${
             botched
                 ? "Botched"
                 : `Successes: ${successes}`
         }
     `;
+
+    if (hitTotalDiceLimit) {
+
+        html += `
+            <br>
+            ⚠ Total Dice Limit Reached
+        `;
+    }
+
+    if (hitExplosionDepthLimit) {
+
+        html += `
+            <br>
+        ⚠ Explosion Depth Limit Reached
+        `;
+    }
 
     html += `
         <br>
@@ -2270,6 +2328,7 @@ if (pendingHistoryRoll) {
 
     addHistory(
         pendingHistoryRoll.count,
+        pendingHistoryRoll.characterName,
         pendingHistoryRoll.difficulty,
         pendingHistoryRoll.successes,
         pendingHistoryRoll.mainDice,
@@ -2277,7 +2336,9 @@ if (pendingHistoryRoll) {
         pendingHistoryRoll.luckyRoll,
         pendingHistoryRoll.isInitiative,
         pendingHistoryRoll.initiative,
-        pendingHistoryRoll.botched
+        pendingHistoryRoll.botched,
+        pendingHistoryRoll.hitTotalDiceLimit,
+        pendingHistoryRoll.hitExplosionDepthLimit
     );
 
     pendingHistoryRoll = null;
