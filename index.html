@@ -46,6 +46,36 @@ h1 {
     overflow-y: auto;
 }
 
+.character-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 32px;
+    cursor: pointer;
+    position: absolute;
+}
+
+.tooltip {
+    display: none;
+    position: absolute;
+    right: 40px;
+    top: 0;
+
+    background: #333;
+    color: white;
+
+    padding: 5px 8px;
+    border-radius: 4px;
+
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.character-button:hover .tooltip {
+    display: block;
+}
+
+
 #toggleLayoutMode {
     width: 120px;
     height: 40px;
@@ -338,10 +368,11 @@ button {
 
 <div class="container">
 
-    <div
-        class="character-button"
-        title="Character Editor">
+    <div class="character-button">
         ⚙
+        <span class="tooltip">
+            Character Editor
+        </span>
     </div>
 
     <div id="luckIndicator" style="display:none;">
