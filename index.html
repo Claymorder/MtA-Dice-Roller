@@ -75,6 +75,14 @@ h1 {
     display: block;
 }
 
+.help-button .tooltip {
+    left: 40px;
+    right: auto;
+}
+
+.help-button:hover .tooltip {
+    display: block;
+}
 
 #toggleLayoutMode {
     width: 120px;
@@ -361,6 +369,75 @@ button {
     }
 }
 
+.help-button {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+
+    font-size: 32px;
+    cursor: pointer;
+}
+
+.modal {
+    display: none;
+
+    position: fixed;
+    inset: 0;
+
+    background: rgba(0,0,0,.7);
+
+    z-index: 10000;
+}
+
+.modal-content {
+    position: absolute;
+
+    top: 50%;
+    left: 50%;
+
+    transform: translate(-50%, -50%);
+
+    background: #2b2b2b;
+    color: white;
+
+    padding: 20px;
+
+    border-radius: 10px;
+
+    width: min(800px, 90vw);
+    max-height: 80vh;
+
+    overflow-y: auto;
+}
+
+.modal-header {
+    position: relative;
+}
+
+.modal-header h2 {
+    width: 100%;
+    text-align: center;
+    margin: 0;
+}
+
+#closeHelp,
+#closeWelcome {
+    position: absolute;
+    top: -20px;
+    right: -5px;
+
+    background: transparent;
+    border: none;
+    padding: 0;
+
+    color: #ff4444;
+    font-size: 40px;
+    font-weight: bold;
+
+    width: auto;
+    height: auto;
+}
+
 </style>
 </head>
 
@@ -372,6 +449,14 @@ button {
         ⚙
         <span class="tooltip">
             Character Editor
+        </span>
+    </div>
+
+    <div class="help-button">
+        🛈
+
+        <span class="tooltip">
+            Help & Shortcuts
         </span>
     </div>
 
@@ -551,9 +636,153 @@ button {
 
 </div>
 
+<div id="helpModal" class="modal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h2>Help & Shortcuts</h2>
+
+            <button id="closeHelp">
+                ✕
+            </button>
+
+        </div>
+
+        <hr>
+
+        <p>
+            Space - Roll dice
+        </p>
+
+        <p>
+            Page Up/Down - Switch Current Character Selection
+        </p>
+
+    </div>
+</div>
+
+<div id="welcomeModal" class="modal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h2>Welcome</h2>
+
+            <button id="closeWelcome">
+                ✕
+            </button>
+
+        </div>
+
+        <hr>
+
+        <p>
+            Welcome to the Mage the Ascension Dice Roller.
+        </p>
+
+        <h3>Main Menus</h3>
+
+        <ul>
+            <li>
+                🛈 Help & Shortcuts - Contains controls and general information.
+            </li>
+
+            <li>
+                ⚙ Character Editor - Create, modify, save, load, import, and export characters.
+            </li>
+
+            <li>
+                Character Stats - Select one or more stats to build a dice pool. The selected pool is shown beside the Character Stats heading.
+            </li>
+
+            <li>
+                History - View previous rolls and initiative checks.
+            </li>
+        </ul>
+
+        <h3>Rolling Dice</h3>
+
+        <ul>
+            <li>
+                Click stats under Character Stats to add them to your dice pool. Or Manually set the Number of Dice. Don't forget to change the difficulty.
+            </li>
+
+            <li>
+                Use Stat Maximums to enforce or ignore stat caps.
+            </li>
+
+            <li>
+                Use Edit Layout to reorder categories and stats.
+            </li>
+
+            <li>
+                Add Stat allows creation of custom stats and categories.
+            </li>
+
+            <li>
+                Press Space or click Roll to make a roll.
+            </li>
+
+            <li>
+                Click Initiative to roll initiative using Dexterity + Wits + 1d10.
+            </li>
+        </ul>
+
+        <h3>Characters</h3>
+
+        <ul>
+            <li>
+                New Character creates an unsaved character sheet.
+            </li>
+
+            <li>
+                Save Character stores the current character locally.
+            </li>
+
+            <li>
+                Import and Export allow characters to be shared between devices.
+            </li>
+        </ul>
+ 
+        <h3>History</h3>
+
+        <ul>
+            <li>
+                History records rolls and initiative checks.
+            </li>
+
+            <li>
+                The most recent roll is recorded after the next roll or initiative check.
+            </li>
+
+            <li>
+                Use Clear History to delete any past rolls.
+            </li>
+        </ul>
+
+        <h3>Navigation</h3>
+
+        <ul>
+            <li>
+                Space - Roll Dice
+            </li>
+
+            <li>
+                Page Up / Page Down - Switch between saved characters.
+            </li>
+        </ul>
+
+    </div>
+
+</div>
+
 <script>
 
 const MAX_HISTORY = 100;
+const CURRENT_VERSION = "3.1";
 
 let selectedStats = [];
 let selectedDice = 0;
@@ -2539,6 +2768,22 @@ renderEditor();
 
 loadHistory();
 
+if (
+    localStorage.getItem(
+        "lastVersionSeen"
+    ) !== CURRENT_VERSION
+) {
+
+    document.getElementById(
+        "welcomeModal"
+    ).style.display = "block";
+
+    localStorage.setItem(
+        "lastVersionSeen",
+        CURRENT_VERSION
+    );
+}
+
 if (pendingHistoryRoll) {
 
     addHistory(
@@ -2562,6 +2807,33 @@ if (pendingHistoryRoll) {
         "pendingHistoryRoll"
     );
 }
+
+document
+.querySelector(".help-button")
+.addEventListener("click", () => {
+
+    document.getElementById(
+        "helpModal"
+    ).style.display = "block";
+});
+
+document
+.getElementById("closeHelp")
+.addEventListener("click", () => {
+
+    document.getElementById(
+        "helpModal"
+    ).style.display = "none";
+});
+
+document
+.getElementById("closeWelcome")
+.addEventListener("click", () => {
+
+    document.getElementById(
+        "welcomeModal"
+    ).style.display = "none";
+});
 
 </script>
 
